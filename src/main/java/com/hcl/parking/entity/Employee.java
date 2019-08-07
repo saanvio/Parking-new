@@ -3,8 +3,6 @@ package com.hcl.parking.entity;
 import java.io.Serializable;
 
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -28,8 +26,15 @@ public class Employee implements Serializable{/**
 	private Long empId;
 	private String name;
 	private String address;
-	@Enumerated(EnumType.STRING)
-	private Role role;
+	private Long sapId;
+	private String designation;
+	private String dateOfJoining;
+	private String role;
+	
+	
+	/*
+	 * @Enumerated(EnumType.STRING) private Role role;
+	 */
 	
 
 }

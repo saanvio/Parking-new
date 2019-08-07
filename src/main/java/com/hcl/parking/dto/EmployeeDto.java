@@ -2,11 +2,6 @@ package com.hcl.parking.dto;
 
 import java.io.Serializable;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-
-import com.hcl.parking.entity.Role;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +19,10 @@ public class EmployeeDto implements Serializable {
 
 	private String name;
 	private String address;
-	@Enumerated(EnumType.STRING)
-	private Role role;
+	private Long sapId;
+	private String designation;
+	private String dateOfJoining;
+//	@Enumerated(EnumType.STRING)
+//	private Role role;
 
 }

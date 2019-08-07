@@ -1,12 +1,13 @@
 package com.hcl.parking.entity;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,19 +19,21 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class DailyAvailableSlot implements Serializable {
-
+public class SlotAllocation implements Serializable {
 	/**
-	 * 
-	 */
+	* 
+	*/
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long dailyAvailableSlotId;
-	
-	private Long parkingSlotId;
-	private LocalDate availableDates;
-	//private String status;
-	//private Long tempOwnerId;
+	private Long slotAllocationId;
+
+	@OneToOne
+	@JoinColumn(name = "parking_slot_id")
+	private ParkingSlot parkingSlot;
+
+	@OneToOne
+	@JoinColumn(name = "owner_id")
+	private Employee employee;
 
 }

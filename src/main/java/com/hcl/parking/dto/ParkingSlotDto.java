@@ -1,11 +1,6 @@
-package com.hcl.parking.entity;
+package com.hcl.parking.dto;
 
 import java.io.Serializable;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,14 +11,11 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-public class ParkingSlot implements Serializable {
+public class ParkingSlotDto implements Serializable {
 	/**
 	* 
 	*/
 	private static final long serialVersionUID = 1L;
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long parkingSlotId;
 	private String slotName;
 

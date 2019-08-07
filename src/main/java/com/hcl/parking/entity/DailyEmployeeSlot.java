@@ -26,10 +26,9 @@ public class DailyEmployeeSlot implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long dailyEmployeeSlotId;
-	
-	private Long parkingSlotId;
 	private Long empId;
 	private LocalDate availableDates;
+	//private Long parkingSlotId;
 	
 	
 
