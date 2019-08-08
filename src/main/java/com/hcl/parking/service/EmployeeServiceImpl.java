@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,9 +32,11 @@ import com.hcl.parking.repository.EmployeeRepository;
 import com.hcl.parking.repository.ParkingRepository;
 import com.hcl.parking.repository.RaffleRepository;
 import com.hcl.parking.repository.SlotAllocationRepository;
+import com.hcl.parking.util.ParkingConstants;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
+	public static final Logger LOGGER = LoggerFactory.getLogger(EmployeeServiceImpl.class);
 	@Autowired
 	EmployeeRepository employeeRepository;
 
@@ -55,9 +59,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	public CommonResponse registration(EmployeeDto employeeDto) {
+		LOGGER.info("Registration service impl");
 		Employee employee = new Employee();
-		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-		LocalDate dateOfJoiningLocalDate = LocalDate.parse(employeeDto.getDateOfJoining(), dateTimeFormatter);
+		LocalDate dateOfJoiningLocalDate = getLocalDate(employeeDto.getDateOfJoining());
 		Period diff = Period.between(dateOfJoiningLocalDate, LocalDate.now());
 		if (diff.getYears() >= 15 || employeeDto.getDesignation().equalsIgnoreCase("vice president"))
 			employee.setRole("Spot owner");
@@ -67,14 +71,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 		BeanUtils.copyProperties(employeeDto, employee);
 		employeeRepository.save(employee);
 
-		return new CommonResponse("Registration success");
+		return new CommonResponse(ParkingConstants.REGISTRATION_MESSAGE);
 	}
 
 	@Override
 	public CommonResponse slotAllocations(Long empId) {
+		LOGGER.info("Slot allocation  service impl");
 		Optional<Employee> employee = employeeRepository.findById(empId);
 		if (!employee.isPresent())
-			throw new UserNotFoundException("Employee not found");
+			throw new UserNotFoundException(ParkingConstants.ERROR_USER_NOT_FOUND_MESSAGE);
 		if (!employee.get().getRole().equalsIgnoreCase("spot owner"))
 			throw new UserNotFoundException("Not Spotowner");
 
@@ -91,75 +96,66 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	public CommonResponse releaseParking(SpotOwnerRequestDto spotOwnerRequestDto) {
-
+		LOGGER.info("release parking impl");
 		Optional<Employee> employee = employeeRepository.findById(spotOwnerRequestDto.getOwnerId());
 		if (!employee.isPresent())
-			throw new UserNotFoundException("Employee not found");
+			throw new UserNotFoundException(ParkingConstants.ERROR_USER_NOT_FOUND_MESSAGE);
 		if (!employee.get().getRole().equalsIgnoreCase("spot owner"))
 			throw new UserNotFoundException("Not Spotowner");
 
 		Optional<SlotAllocation> parkingSlot = slotAllocationRepository
 				.findByParkingSlot(spotOwnerRequestDto.getOwnerId());
 		if (!parkingSlot.isPresent())
-			throw new UserNotFoundException("No parking slots");
+			throw new UserNotFoundException(ParkingConstants.ERROR_NO_PARKING_SLOTS);
 
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-		LocalDate fromDate = LocalDate.parse(spotOwnerRequestDto.getFromDate(), formatter);
-		LocalDate toDate = LocalDate.parse(spotOwnerRequestDto.getToDate(), formatter);
-		if (fromDate.compareTo(LocalDate.now()) == 0 || fromDate.compareTo(LocalDate.now()) > 0) {
+		LocalDate fromDate = getLocalDate(spotOwnerRequestDto.getFromDate());
+		LocalDate toDate = getLocalDate(spotOwnerRequestDto.getToDate());
 
-			if (fromDate.compareTo(toDate) == 0 || fromDate.compareTo(toDate) < 0) {
+		if (fromDate.compareTo(LocalDate.now()) != 0 || fromDate.compareTo(LocalDate.now()) < 0)
+			throw new CommonException(ParkingConstants.ERROR_FROM_DATE);
 
-				List<LocalDate> dates = new ArrayList<LocalDate>();
-				LocalDate current = fromDate;
-				while (current.isBefore(toDate) || current.equals(toDate)) {
-					dates.add(current);
-					current = current.plusDays(1);
-					DailyAvailableSlot dailyAvailableSlot = new DailyAvailableSlot();
-					dailyAvailableSlot.setParkingSlotId(parkingSlot.get().getSlotAllocationId());
-					dailyAvailableSlot.setAvailableDates(current);
+		if (fromDate.compareTo(toDate) != 0 || fromDate.compareTo(toDate) > 0)
+			throw new CommonException(ParkingConstants.ERROR_TO_DATE);
 
-					dailyAvailableslotRepo.save(dailyAvailableSlot);
-
-				}
-				return new CommonResponse("success");
-
-			} else {
-				throw new CommonException("To date always greater than or equal to from date");
-			}
-		} else {
-			throw new CommonException("From date always greater tha or equal to current date");
+		List<LocalDate> dates = new ArrayList<LocalDate>();
+		LocalDate current = fromDate;
+		while (current.isBefore(toDate) || current.equals(toDate)) {
+			dates.add(current);
+			DailyAvailableSlot dailyAvailableSlot = new DailyAvailableSlot();
+			dailyAvailableSlot.setParkingSlotId(parkingSlot.get().getSlotAllocationId());
+			dailyAvailableSlot.setAvailableDates(current);
+			current = current.plusDays(1);
+			dailyAvailableslotRepo.save(dailyAvailableSlot);
 		}
+		return new CommonResponse(ParkingConstants.SUCCESS);
 
 	}
 
 	@Override
 	public CommonResponse requestParking(Long empId) {
-
+		LOGGER.info("Request aprking service impl");
 		Optional<Employee> employee = employeeRepository.findById(empId);
 		if (!employee.isPresent())
-			throw new UserNotFoundException("Employee not found");
+			throw new UserNotFoundException(ParkingConstants.ERROR_USER_NOT_FOUND_MESSAGE);
 		if (!employee.get().getRole().equalsIgnoreCase("Hq employees"))
 			throw new UserNotFoundException("Not Hq employee");
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-		LocalDate currentDate = LocalDate.parse(LocalDate.now().toString(), formatter);
-		if (currentDate.compareTo(LocalDate.now()) == 0 || currentDate.compareTo(LocalDate.now()) > 0) {
+		LocalDate currentDate = getLocalDate(LocalDate.now().toString());
+		if (currentDate.compareTo(LocalDate.now()) != 0 || currentDate.compareTo(LocalDate.now()) < 0)
+			throw new CommonException(ParkingConstants.ERROR_FROM_DATE);
 
-			DailyEmployeeSlot dailyEmployeeSlot = new DailyEmployeeSlot();
-			dailyEmployeeSlot.setEmpId(employee.get().getEmpId());
-			dailyEmployeeSlot.setAvailableDates(currentDate);
+		DailyEmployeeSlot dailyEmployeeSlot = new DailyEmployeeSlot();
+		dailyEmployeeSlot.setEmpId(employee.get().getEmpId());
+		dailyEmployeeSlot.setAvailableDates(currentDate);
+		dailyEmployeeSlotRepository.save(dailyEmployeeSlot);
 
-			dailyEmployeeSlotRepository.save(dailyEmployeeSlot);
+		return new CommonResponse(ParkingConstants.SUCCESS);
 
-			return new CommonResponse("success");
-
-		} else {
-			throw new CommonException("From date always greater than or equal to current date");
-		}
 	}
 
 	@Override
 	public List<Raffle> doRaffle() {
+		LOGGER.info("raffle service impl");
+
 		LocalDate currentDate = LocalDate.now();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		LocalDate localDateForamt = LocalDate.parse(currentDate.toString(), formatter);
@@ -195,6 +191,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 	@Override
 	public ParkingSlotDto getSlotDetails(Long empId) {
 		return null;
+	}
+
+	public LocalDate getLocalDate(String data) {
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(ParkingConstants.DATE_FORMAT);
+		LocalDate dateOfJoiningLocalDate = LocalDate.parse(data, dateTimeFormatter);
+		return dateOfJoiningLocalDate;
+
 	}
 
 }

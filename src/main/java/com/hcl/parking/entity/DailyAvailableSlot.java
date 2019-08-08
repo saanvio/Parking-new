@@ -31,6 +31,5 @@ public class DailyAvailableSlot implements Serializable {
 	private Long parkingSlotId;
 	private LocalDate availableDates;
 	//private String status;
-	//private Long tempOwnerId;
 
 }

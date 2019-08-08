@@ -10,8 +10,8 @@ public enum Role {
 
 	private static Map<String, Role> rolesMap=new HashMap<>();
 	static {
-		rolesMap.put("spot owner",SPOT_OWNER);
-		rolesMap.put("hq employee",HQ_EMPLOYEES);
+		rolesMap.put("Spot owner",SPOT_OWNER);
+		rolesMap.put("Hq employees",HQ_EMPLOYEES);
 		rolesMap.put("admin",ADMIN);
 		
 	}
