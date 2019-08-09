@@ -190,7 +190,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	public ParkingSlotDto getSlotDetails(Long empId) {
-		return null;
+		Optional<Employee> employee = employeeRepository.findById(empId);
+		if (!employee.isPresent())
+			throw new UserNotFoundException(ParkingConstants.ERROR_USER_NOT_FOUND_MESSAGE);
+		if (!employee.get().getRole().equalsIgnoreCase("Hq employees"))
+			throw new UserNotFoundException("Not Hq employee");
+		Optional<ParkingSlot> parkingSlot = raffleRepository.getParkingSlotName(empId);
+		if (!parkingSlot.isPresent())
+			throw new CommonException("No parking slots present");
+
+		ParkingSlotDto parkingSlotDto = new ParkingSlotDto();
+		BeanUtils.copyProperties(parkingSlot.get(), parkingSlotDto);
+		return parkingSlotDto;
+
 	}
 
 	public LocalDate getLocalDate(String data) {
